@@ -139,8 +139,19 @@ public class Bullet extends ImageView {
         deltaY = target_Y - this.getPositionY();
         direction = Math.atan(deltaY / deltaX);
 
-        //
+        //Бьем врага
         for (Unit unit : MyGame.enemy_unit) {
+            if (enemy.equals(unit)) {
+
+                if (unit.getBoundary().intersects(this.getBoundary())) {
+                    unit.Health = unit.Health - 300;
+                    this.death();
+                }
+            }
+        }
+        
+        //Нас бьют
+        for (Unit unit : MyGame.friend_unit) {
             if (enemy.equals(unit)) {
 
                 if (unit.getBoundary().intersects(this.getBoundary())) {

@@ -28,13 +28,26 @@ public class Building extends Rectangle {
     public Building(String type) {
         if (type.equals("res")) {
             this.setImage(new Image("img/res.png"));
-        } else {
+            this.Health = 3000;
+        } 
+        else if(type.equals("base")) {
             this.setImage(new Image("img/base3.png"));
+            this.Health = 10000;
         }
-        this.positionX = 10;
-        this.positionY = 10;
+        else if(type.equals("refinary")){
+            this.setImage(new Image("img/refinary1.png"));
+            this.Health = 10000;
+        }
+         else if(type.equals("factory")){
+            this.setImage(new Image("img/base0.png"));
+            this.Health = 10000;
+        }
+        
+        
+        //this.positionX = 10;
+        //this.positionY = 10;
         this.type = type;
-        this.Health = 10000;
+        
     }
 
     //Рисунок
@@ -98,5 +111,9 @@ public class Building extends Rectangle {
     //Уничтожение
     public void death() {
         is_death = true;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

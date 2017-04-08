@@ -7,6 +7,7 @@ package sprite;
 
 import geometry.Vector;
 import java.util.ArrayList;
+import java.util.Random;
 import javafx.scene.image.Image;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.geometry.Rectangle2D;
@@ -26,28 +27,42 @@ public class Unit extends Circle {
     public double width;
     public double height;
     public String type;
-    private double target_X;
-    private double target_Y;
+    public double target_X;
+    public double target_Y;
     public int Health;
-    public boolean is_death;
-    private long time_shot;
+    public boolean is_death;    
     public ArrayList<Bullet> bullet_arr = new ArrayList<Bullet>();
-    private double radius_visible = 400.0;
+    private double radius_visible = 400.0;   
+    public double speed = 3;   
+    public double tanker; // значение ресов в юните
+    public double limit_tanker = 5000;  
     private double res_x;
     private double res_y;
-    public double speed = 3;
-    public double tanker;
-    public double limit_tanker = 10000;
+    private double base_jps_x;
+    private double base_jps_y;
+    
+    //Счетчики времени
+    private long time_res;
+    private long time_shot;   
+        
 
     //Конструктор
-    public Unit(String type) {
+    public Unit(String type, double x, double y) {
         this.setImage(new Image("img/robo.png"));
-        this.target_X = 20;
-        this.target_Y = 20;
+        this.target_X = x;
+        this.target_Y = y;
         this.type = type;
         this.Health = 10000;
-        this.setCenterX(20);
-        this.setCenterY(20);
+        this.setCenterX(x);
+        this.setCenterY(y);
+        this.setRadius(5);
+    }
+    
+    //Конструктор
+    public Unit(String type) {
+        this.setImage(new Image("img/robo.png"));       
+        this.type = type;
+        this.Health = 10000;       
         this.setRadius(5);
     }
 
@@ -97,7 +112,7 @@ public class Unit extends Circle {
     }
 
     //Метод для движения к цели спрайтов
-    public void runner() {
+    public void runner() {        
         double deltaX;
         double deltaY;
         double direction;
@@ -108,16 +123,16 @@ public class Unit extends Circle {
 
         if (this.contains(target_X, target_Y)) {
             //System.out.println("BINGO " + count); 
-        } else if ((deltaX < -0.1 & deltaY < -0.1)) {
+        } else if ((deltaX < -0.01 & deltaY < -0.01)) {
             this.setCenterX(this.getCenterX() - (speed * Math.cos(direction)));
             this.setCenterY(this.getCenterY() - (speed * Math.sin(direction)));
-        } else if ((deltaX > 0.1 & deltaY > 0.1)) {
+        } else if ((deltaX > 0.01 & deltaY > 0.01)) {
             this.setCenterX(this.getCenterX() + (speed * Math.cos(direction)));
             this.setCenterY(this.getCenterY() + (speed * Math.sin(direction)));
-        } else if ((deltaX > 0.1 & deltaY < -0.1)) {
+        } else if ((deltaX > 0.01 & deltaY < -0.01)) {
             this.setCenterX(this.getCenterX() + (speed * Math.cos(direction)));
             this.setCenterY(this.getCenterY() + (speed * Math.sin(direction)));
-        } else if ((deltaX < -0.1 & deltaY > 0.1)) {
+        } else if ((deltaX < -0.01 & deltaY > 0.01)) {
             this.setCenterX(this.getCenterX() - (speed * Math.cos(direction)));
             this.setCenterY(this.getCenterY() - (speed * Math.sin(direction)));
         }
@@ -138,24 +153,104 @@ public class Unit extends Circle {
         this.time_shot = time_shot;
     }
 
+    public long getTime_res() {
+        return time_res;
+    }
+
+    public void setTime_res(long time_res) {
+        this.time_res = time_res;
+    }
+
+    public double getBase_jps_x() {
+        return base_jps_x;
+    }
+
+    public void setBase_jps_x(double base_jps_x) {
+        this.base_jps_x = base_jps_x;
+    }
+
+    public double getBase_jps_y() {
+        return base_jps_y;
+    }
+
+    public void setBase_jps_y(double base_jps_y) {
+        this.base_jps_y = base_jps_y;
+    }
+    
+    
+        
     //Смерть
     public void death() {
         is_death = true;
     }
 
+    //Сбор урожая
     public void harvest(Building b) {
-        for (Building bb : MyGame.friend_build) {
 
-            if (bb.equals(b)) {
-                bb.Health = bb.Health - 1000;
+        //Если заполнился то на базу
+        if (this.tanker >= this.limit_tanker) {
+            this.target_X = this.base_jps_x;
+            this.target_Y = this.base_jps_y;
+            return;
+        }
+        
+        for (int i = 0; i < MyGame.friend_build.size(); i++) {
+            if (MyGame.friend_build.get(i).equals(b)) {
+                MyGame.friend_build.get(i).Health = MyGame.friend_build.get(i).Health - 100;
+                
+                //System.out.println(MyGame.friend_build.get(i).Health);                
             }
         }
-        this.tanker = this.tanker + 1000;
+        this.tanker = this.tanker + 100;       
+    }
+    
+    //Выгруза урожая 
+    public void unload_res() {          
+        MyGame.setResourse(MyGame.getResourse() + this.tanker);  
+        this.tanker = 0;
+        this.get_res_target();
+    }
+    
+    //Получение координат ближайших ресурсов
+    public void get_res_target(){ 
+        
+        Vector vec = null;
+        double vec_t = 100000.0;
+        Building item_v = null;
+        
+        Random randNumber = new Random();
+        double random = randNumber.nextDouble();
+        
+            for (int i = 0; i < MyGame.friend_build.size(); i++) {
+            if (MyGame.friend_build.get(i).type.equals("res")) {
+                vec = new Vector(this.getCenterX(), this.getCenterY(), MyGame.friend_build.get(i).getPositionX(), MyGame.friend_build.get(i).getPositionY());
 
-        if (this.tanker > this.limit_tanker) {
-            this.target_X = 1000;
-            this.target_Y = 1000;
+                if (vec.get_long() < vec_t) {
+                    vec_t = vec.get_long();
+                    item_v = MyGame.friend_build.get(i);
+                }
+            }
+        }
+        if (item_v!=null){
+        this.target_X = item_v.getPositionX() + random + 60;
+        this.target_Y = item_v.getPositionY() + random + 60;       
+        }
+        else {
+         this.target_X = this.base_jps_x;
+         this.target_Y = this.base_jps_y;        
+        }                
+    }
 
+    public double getTarget_X() {
+        return target_X;
+    }
+
+    public double getTarget_Y() {
+        return target_Y;
+    }    
+}
+
+ /*
             //this.image = new Image("img/laser1.png");      
             ImageView iv = new ImageView(this.image);
             Vector vectorA = new Vector(this.getCenterX(), this.getCenterY(), this.getCenterX() + 100.0, this.getCenterY());
@@ -175,6 +270,4 @@ public class Unit extends Circle {
             params.setFill(Color.TRANSPARENT);
             Image rotatedImage = iv.snapshot(params, null);
             this.setImage(rotatedImage);
-        }
-    }
-}
+         */
