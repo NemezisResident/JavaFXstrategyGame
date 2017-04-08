@@ -26,25 +26,33 @@ public class Unit extends Circle {
     public Image image;
     public double width;
     public double height;
-    public String type;
+
     public double target_X;
     public double target_Y;
     public int Health;
-    public boolean is_death;    
+    public boolean is_death;
     public ArrayList<Bullet> bullet_arr = new ArrayList<Bullet>();
-    private double radius_visible = 500.0;   
-    public double speed = 3;   
+    private double radius_visible = 500.0;
+    public double speed = 3;
     public double tanker; // значение ресов в юните
-    public double limit_tanker = 5000;  
-    private double res_x;
-    private double res_y;
+    public double limit_tanker = 5000;
     private double base_jps_x;
     private double base_jps_y;
-    
+
     //Счетчики времени
     private long time_res;
-    private long time_shot;   
-        
+    private long time_shot;
+
+    public String type;
+    public int status_stranger;
+
+    //Типы зданий и юнитов    
+    private final String unit_type = "unit";
+    private final String harvester = "HARVESTER";
+    private final String refinary = "REFINARY";
+    private final String resources = "RESOURCES";
+    private final String medium_plant = "MEDIUM_PLANT";
+    private final String base = "BASE";
 
     //Конструктор
     public Unit(String type, double x, double y) {
@@ -57,12 +65,12 @@ public class Unit extends Circle {
         this.setCenterY(y);
         this.setRadius(5);
     }
-    
+
     //Конструктор
     public Unit(String type) {
-        this.setImage(new Image("img/robo.png"));       
+        this.setImage(new Image("img/robo.png"));
         this.type = type;
-        this.Health = 10000;       
+        this.Health = 10000;
         this.setRadius(5);
     }
 
@@ -102,11 +110,11 @@ public class Unit extends Circle {
     public boolean intersects_enemy(Unit s) {
         return s.getAround(radius_visible).contains(this.getCenterX(), this.getCenterY());
     }
-    
+
     //Проверяем здания в нашем радиусе
     public boolean intersects_enemy_b(Building s) {
         boolean flag = false;
-        
+
         if (this.getAround(radius_visible).contains(s.getPositionX(), s.getPositionY())) {
             flag = true;
         } else if (this.getAround(radius_visible).contains(s.getPositionX() + s.width, s.getPositionY() + s.height)) {
@@ -129,7 +137,7 @@ public class Unit extends Circle {
     }
 
     //Метод для движения к цели спрайтов
-    public void runner() {        
+    public void runner() {
         double deltaX;
         double deltaY;
         double direction;
@@ -155,15 +163,15 @@ public class Unit extends Circle {
         }
     }
 
-    //Стрельба
-    public void shot(Unit spM, Unit spE) {
-        Bullet b = new Bullet(spM, spE);
+    //Стрельба по юниту
+    public void shot(Unit me, Unit enemy) {
+        Bullet b = new Bullet(me, enemy);
         bullet_arr.add(b);
     }
-    
+
     //Стрельба по зданию
-    public void shot(Unit spM, Building spE) {
-        Bullet b = new Bullet(spM, spE);
+    public void shot(Unit me, Building enemy) {
+        Bullet b = new Bullet(me, enemy);
         bullet_arr.add(b);
     }
 
@@ -199,9 +207,7 @@ public class Unit extends Circle {
     public void setBase_jps_y(double base_jps_y) {
         this.base_jps_y = base_jps_y;
     }
-    
-    
-        
+
     //Смерть
     public void death() {
         is_death = true;
@@ -209,59 +215,60 @@ public class Unit extends Circle {
 
     //Сбор урожая
     public void harvest(Building b) {
-       
+
         //Если заполнился то на базу
         if (this.tanker >= this.limit_tanker) {
             this.target_X = this.base_jps_x;
             this.target_Y = this.base_jps_y;
             return;
         }
-        
-        for (int i = 0; i < MyGame.friend_build.size(); i++) {
-            if (MyGame.friend_build.get(i).equals(b)) {
-                MyGame.friend_build.get(i).Health = MyGame.friend_build.get(i).Health - 100;
-                this.tanker = this.tanker + 100; 
+
+        for (int i = 0; i < MyGame.buildings.size(); i++) {
+            if (MyGame.buildings.get(i).equals(b)) {
+                MyGame.buildings.get(i).Health = MyGame.buildings.get(i).Health - 100;
+                this.tanker = this.tanker + 100;
                 return;
                 //System.out.println(MyGame.friend_build.get(i).Health);                
             }
-        }   
+        }
     }
-    
+
     //Выгруза урожая 
-    public void unload_res() {          
-        MyGame.setResourse(MyGame.getResourse() + this.tanker);  
+    public void unload_res() {
+        if (this.getStatus_stranger() == 1) {
+            MyGame.setResourse(MyGame.getResourse() + this.tanker);
+        }
         this.tanker = 0;
         this.get_res_target();
     }
-    
+
     //Получение координат ближайших ресурсов
-    public void get_res_target(){ 
-        
+    public void get_res_target() {
+
         Vector vec = null;
         double vec_t = 100000.0;
         Building item_v = null;
-        
+
         Random randNumber = new Random();
         double random = randNumber.nextDouble();
-        
-            for (int i = 0; i < MyGame.friend_build.size(); i++) {
-            if (MyGame.friend_build.get(i).type.equals("res")) {
-                vec = new Vector(this.getCenterX(), this.getCenterY(), MyGame.friend_build.get(i).getPositionX(), MyGame.friend_build.get(i).getPositionY());
+
+        for (int i = 0; i < MyGame.buildings.size(); i++) {
+            if (MyGame.buildings.get(i).type.equals(resources)) {
+                vec = new Vector(this.getCenterX(), this.getCenterY(), MyGame.buildings.get(i).getPositionX(), MyGame.buildings.get(i).getPositionY());
 
                 if (vec.get_long() < vec_t) {
                     vec_t = vec.get_long();
-                    item_v = MyGame.friend_build.get(i);
+                    item_v = MyGame.buildings.get(i);
                 }
             }
         }
-        if (item_v!=null){
-        this.target_X = item_v.getPositionX() + random + 30;
-        this.target_Y = item_v.getPositionY() + random + 30;       
+        if (item_v != null) {
+            this.target_X = item_v.getPositionX() + random + 30;
+            this.target_Y = item_v.getPositionY() + random + 30;
+        } else {
+            this.target_X = this.base_jps_x;
+            this.target_Y = this.base_jps_y;
         }
-        else {
-         this.target_X = this.base_jps_x;
-         this.target_Y = this.base_jps_y;        
-        }                
     }
 
     public double getTarget_X() {
@@ -270,10 +277,18 @@ public class Unit extends Circle {
 
     public double getTarget_Y() {
         return target_Y;
-    }    
+    }
+
+    public int getStatus_stranger() {
+        return status_stranger;
+    }
+
+    public void setStatus_stranger(int status_stranger) {
+        this.status_stranger = status_stranger;
+    }
 }
 
- /*
+/*
             //this.image = new Image("img/laser1.png");      
             ImageView iv = new ImageView(this.image);
             Vector vectorA = new Vector(this.getCenterX(), this.getCenterY(), this.getCenterX() + 100.0, this.getCenterY());
@@ -293,4 +308,4 @@ public class Unit extends Circle {
             params.setFill(Color.TRANSPARENT);
             Image rotatedImage = iv.snapshot(params, null);
             this.setImage(rotatedImage);
-         */
+ */

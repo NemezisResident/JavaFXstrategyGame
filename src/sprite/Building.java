@@ -23,31 +23,34 @@ public class Building extends Rectangle {
     public String type;
     public int Health;
     public boolean is_death;
+    public int status_stranger;
+
+    //Типы зданий 
+    private final String refinary = "REFINARY";
+    private final String resources = "RESOURCES";
+    private final String medium_plant = "MEDIUM_PLANT";
+    private final String base = "BASE";
 
     //Конструктор
     public Building(String type) {
-        if (type.equals("res")) {
+        if (type.equals(resources)) {
             this.setImage(new Image("img/sun.png"));
             this.Health = 50000;
-        } 
-        else if(type.equals("base")) {
+        } else if (type.equals(base)) {
             this.setImage(new Image("img/base3.png"));
             this.Health = 3000;
-        }
-        else if(type.equals("refinary")){
+        } else if (type.equals(refinary)) {
             this.setImage(new Image("img/refinary1.png"));
             this.Health = 10000;
-        }
-         else if(type.equals("factory")){
+        } else if (type.equals(medium_plant)) {
             this.setImage(new Image("img/base0.png"));
             this.Health = 10000;
         }
-        
-        
+
         //this.positionX = 10;
         //this.positionY = 10;
         this.type = type;
-        
+
     }
 
     //Рисунок
@@ -103,11 +106,10 @@ public class Building extends Rectangle {
         return new Rectangle2D(positionX, positionY, Math.abs(width), Math.abs(height));
     }
 
-  
     public boolean intersects(Unit s) {
         return s.getBoundary().intersects(this.getBoundary());
     }
-    
+
     //--------------------------------------------------------------------------    
     //Проверка коллизий для селекта
     public Rectangle2D getBoundary(Double x, Double y) {
@@ -125,11 +127,11 @@ public class Building extends Rectangle {
         }
         return rec;
     }
-  
+
     public boolean intersects(Unit s, Double x, Double y) {
-        return s.getBoundary().intersects(this.getBoundary(x,y));
+        return s.getBoundary().intersects(this.getBoundary(x, y));
     }
-    
+
     //Уничтожение
     public void death() {
         is_death = true;
@@ -137,5 +139,13 @@ public class Building extends Rectangle {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public int getStatus_stranger() {
+        return status_stranger;
+    }
+
+    public void setStatus_stranger(int status_stranger) {
+        this.status_stranger = status_stranger;
     }
 }

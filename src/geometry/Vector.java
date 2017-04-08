@@ -51,10 +51,10 @@ public class Vector {
 
         return radAngle;
     }
-    
+
     //Длинна вектора
-     public double get_long() {
+    public double get_long() {
         double modA = Math.sqrt(Math.pow(this.A, 2) + Math.pow(this.B, 2));
         return modA;
-    }            
+    }
 }

@@ -36,6 +36,9 @@ import sprite.Building;
  */
 public class MyGame extends Application {
 
+    //Динамические элементы отображения
+    private Label resourse_lbl;
+
     //Переменные
     private double target_X;
     private double target_Y;
@@ -43,8 +46,6 @@ public class MyGame extends Application {
     private double construkt_Y;
     private boolean is_construkt;
     private boolean is_select;
-    private final String unit_type = "unit";
-    private int count;
     public static double resourse = 100000;
     private long time_pres;
     private long time_drag;
@@ -55,15 +56,18 @@ public class MyGame extends Application {
     private final ArrayList<Unit> selected_sprite = new ArrayList<Unit>();
 
     //Справочники
-    public static ArrayList<Unit> friend_unit = new ArrayList<Unit>();
-    public static ArrayList<Building> friend_build = new ArrayList<Building>();
-    public static ArrayList<Unit> enemy_unit = new ArrayList<Unit>();
-    public static ArrayList<Building> enemy_build = new ArrayList<Building>();
+    public static ArrayList<Unit> units = new ArrayList<Unit>();
+    public static ArrayList<Building> buildings = new ArrayList<Building>();
 
-    //Динамические элементы
-    private Label resourse_lbl;
+    //Типы зданий и юнитов    
+    private final String unit_type = "unit";
+    private final String harvester = "HARVESTER";
+    private final String refinary = "REFINARY";
+    private final String resources = "RESOURCES";
+    private final String medium_plant = "MEDIUM_PLANT";
+    private final String base = "BASE";
+
     //--------------------------------------------------------------------------
-
     public static void main(String[] args) {
         launch(args);
     }
@@ -88,7 +92,7 @@ public class MyGame extends Application {
         Button create_unit = new Button("СОЗДАТЬ");
         Button create_factory = new Button("Построить");
         resourse_lbl = new Label(String.valueOf(resourse));
-        hbox.getChildren().addAll(create_factory, create_unit, resourse_lbl, cb, cb1,cb2);
+        hbox.getChildren().addAll(create_factory, create_unit, resourse_lbl, cb, cb1, cb2);
 
         //
         Scene theScene = new Scene(vbox);
@@ -108,16 +112,17 @@ public class MyGame extends Application {
 
         //Sprite       
         select.setImage(new Image("img/select.png"));
-      
+
         //Создаем ресурсы
         int q1 = 50;
         int q2 = 0;
-        
-        for (int i = 0; i < 10; i++) {            
-            q2 +=300; 
+
+        for (int i = 0; i < 10; i++) {
+            q2 += 300;
             //Building res = new Building("res");            
-            friend_build.add(new Building("res"));//.setPosition(target_X, target_Y));
-            friend_build.get(friend_build.size()-1).setPosition(q1, q2);
+            buildings.add(new Building(resources));//.setPosition(target_X, target_Y));
+            buildings.get(buildings.size() - 1).setPosition(q1, q2);
+            buildings.get(buildings.size() - 1).setStatus_stranger(0);
         }
 
         //Loop
@@ -146,16 +151,9 @@ public class MyGame extends Application {
 
                 //Строительство
                 if (is_construkt) {
-                    if(cb.selectedProperty().get()){
-                    enemy_build.get(0).setPositionX(construkt_X);
-                    enemy_build.get(0).setPositionY(construkt_Y);
-                    enemy_build.get(0).render(gc);
-                    }
-                    else{
-                    friend_build.get(0).setPositionX(construkt_X);
-                    friend_build.get(0).setPositionY(construkt_Y);
-                    friend_build.get(0).render(gc);
-                    }
+                    buildings.get(0).setPositionX(construkt_X);
+                    buildings.get(0).setPositionY(construkt_Y);
+                    buildings.get(0).render(gc);
                 }
 
                 //Селект
@@ -167,24 +165,11 @@ public class MyGame extends Application {
                     select.render(gc, width, hight);
                 }
 
-                //Движение дружеских юнитов и пуль                
-                for (int i = 0; i < friend_unit.size(); i++) {
-                    friend_unit.get(i).runner();
-                    
-                    for (Bullet bul : friend_unit.get(i).bullet_arr) {
-                        double posX = bul.getPositionX();
-                        double posY = bul.getPositionY();
-                        bul.runner();
-                        if (posX == bul.getPositionX() | posY == bul.getPositionY()) {
-                            bul.is_death = true;
-                        }
-                    }
-                }
-                
-                 //Движение вражеских юнитов и пуль
-                for (Unit sprite : enemy_unit) {
-                    //sprite.runner();
-                    for (Bullet bul : sprite.bullet_arr) {
+                //Движение юнитов и пуль                
+                for (int i = 0; i < units.size(); i++) {
+                    units.get(i).runner();
+
+                    for (Bullet bul : units.get(i).bullet_arr) {
                         double posX = bul.getPositionX();
                         double posY = bul.getPositionY();
                         bul.runner();
@@ -195,152 +180,105 @@ public class MyGame extends Application {
                 }
 
                 //Проверка коллизий для пересечения юнитов
-                for (int i = 0; i < friend_unit.size(); i++) {
-                    for (int j = 0; j < friend_build.size(); j++) {
+                for (int i = 0; i < units.size(); i++) {
+                    for (int j = 0; j < buildings.size(); j++) {
                         //Если есть пересечение юнита и здания то
-                        if (friend_build.get(j).intersects(friend_unit.get(i))) {
+                        if (buildings.get(j).intersects(units.get(i))) {
                             //System.out.println("colliz" + friend_unit.indexOf(friend_unit.get(i)) + " " + friend_unit.get(i).getTarget_X() + " " + friend_unit.get(i).getTarget_Y());                            
                             //Если сборщик на ресурсах
-                            if (friend_build.get(j).type.equals("res") & friend_unit.get(i).type.equals("harvest")) {
-
+                            if (buildings.get(j).type.equals(resources) & units.get(i).type.equals(harvester)) {
                                 Date dt = new Date();
-                                if (dt.getTime() - friend_unit.get(i).getTime_res() > 500
-                                        | friend_unit.get(i).getTime_res() == 0) {
-                                    friend_unit.get(i).harvest(friend_build.get(j));
-                                    friend_unit.get(i).setTime_res(dt.getTime());
+                                if (dt.getTime() - units.get(i).getTime_res() > 500
+                                        | units.get(i).getTime_res() == 0) {
+                                    units.get(i).harvest(buildings.get(j));
+                                    units.get(i).setTime_res(dt.getTime());
                                 }
                             } //Если сборщик на заводе
-                            else if (friend_build.get(j).type.equals("refinary") & friend_unit.get(i).type.equals("harvest")) {
-                                if (friend_unit.get(i).tanker > 0) {
+                            else if (buildings.get(j).type.equals(refinary) & units.get(i).type.equals(harvester)) {
+                                if (units.get(i).tanker > 0) {
                                     //    Date dt = new Date();
                                     //if (dt.getTime() - friend_unit.get(i).getTime_shot() > 500
                                     // | friend_unit.get(i).getTime_shot() == 0) {
 
-                                    friend_unit.get(i).unload_res();
+                                    units.get(i).unload_res();
                                     //friend_unit.get(i).setTime_shot(dt.getTime());
                                     // }
                                     //  else{
                                     //   System.out.println("bug");
                                 } //}
-                                else if (friend_unit.get(i).tanker <= 0) {
-                                    friend_unit.get(i).get_res_target();
-                                }
-                            }
-                        }
-                    }                   
-                }
-
-                //Проверка радиуса обзора для стрельбы
-                for (int i = 0; i < friend_unit.size(); i++) {
-                    //Проверяем юнитов в радиусе
-                    for (int j = 0; j < enemy_unit.size(); j++) {
-                        if (friend_unit.get(i).intersects_enemy(enemy_unit.get(j))) {
-                            if (friend_unit.get(i).type.equals(unit_type)) {
-                                Date dt = new Date();
-                                if (dt.getTime() - friend_unit.get(i).getTime_shot() > 500
-                                        | friend_unit.get(i).getTime_shot() == 0) {
-                                    friend_unit.get(i).shot(friend_unit.get(i), enemy_unit.get(j));
-                                    friend_unit.get(i).setTime_shot(dt.getTime());
-                                }
-                            }
-
-                            //Стрельба врага
-                            Date dt = new Date();
-                            if (dt.getTime() - enemy_unit.get(j).getTime_shot() > 500
-                                    | enemy_unit.get(j).getTime_shot() == 0) {
-                                enemy_unit.get(j).shot(enemy_unit.get(j), friend_unit.get(i));
-                                enemy_unit.get(j).setTime_shot(dt.getTime());
-                            }
-                        }
-                    }                    
-                     //Проверяем здания в радиусе
-                    for (int ij = 0; ij < enemy_build.size(); ij++) {
-                        if (friend_unit.get(i).intersects_enemy_b(enemy_build.get(ij))) {
-                             if (friend_unit.get(i).type.equals(unit_type)) {
-                                Date dt = new Date();
-                                if (dt.getTime() - friend_unit.get(i).getTime_shot() > 500
-                                        | friend_unit.get(i).getTime_shot() == 0) {
-                                    friend_unit.get(i).shot(friend_unit.get(i), enemy_build.get(ij));
-                                    friend_unit.get(i).setTime_shot(dt.getTime());
+                                else if (units.get(i).tanker <= 0) {
+                                    units.get(i).get_res_target();
                                 }
                             }
                         }
                     }
                 }
-                
+
                 //Проверка радиуса обзора для стрельбы
-                for (int i = 0; i < enemy_unit.size(); i++) {
-                     //Проверяем здания в радиусе
-                    for (int ij = 0; ij < friend_build.size(); ij++) {
-                        if (enemy_unit.get(i).intersects_enemy_b(friend_build.get(ij))) {
-                             if (enemy_unit.get(i).type.equals(unit_type) & !friend_build.get(ij).type.equals("res") ) {
-                                Date dt = new Date();
-                                if (dt.getTime() - enemy_unit.get(i).getTime_shot() > 500
-                                        | enemy_unit.get(i).getTime_shot() == 0) {
-                                    enemy_unit.get(i).shot(enemy_unit.get(i), friend_build.get(ij));
-                                    enemy_unit.get(i).setTime_shot(dt.getTime());
+                for (int i = 0; i < units.size(); i++) {
+                    //Проверяем юнитов в радиусе
+                    for (int j = 0; j < units.size(); j++) {
+                        if (units.get(i).intersects_enemy(units.get(j))) {
+                            if (units.get(i).getStatus_stranger() == 1 & units.get(j).getStatus_stranger() == 2
+                                    | units.get(i).getStatus_stranger() == 2 & units.get(j).getStatus_stranger() == 1) {
+                                if (units.get(i).type.equals(unit_type)) {
+                                    Date dt = new Date();
+                                    if (dt.getTime() - units.get(i).getTime_shot() > 500
+                                            | units.get(i).getTime_shot() == 0) {
+                                        units.get(i).shot(units.get(i), units.get(j));
+                                        units.get(i).setTime_shot(dt.getTime());
+                                    }
                                 }
                             }
                         }
-                    }                
+                    }
+                    //Проверяем здания в радиусе
+                    for (int k = 0; k < buildings.size(); k++) {
+                        if (units.get(i).intersects_enemy_b(buildings.get(k))) {
+                            if (units.get(i).getStatus_stranger() == 1 & buildings.get(k).getStatus_stranger() == 2
+                                    | units.get(i).getStatus_stranger() == 2 & buildings.get(k).getStatus_stranger() == 1) {
+                                if (units.get(i).type.equals(unit_type)) {
+                                    Date dt = new Date();
+                                    if (dt.getTime() - units.get(i).getTime_shot() > 500
+                                            | units.get(i).getTime_shot() == 0) {
+                                        units.get(i).shot(units.get(i), buildings.get(k));
+                                        units.get(i).setTime_shot(dt.getTime());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-                
+
                 //--------------------------------------------------------------
                 //Отрисовка дружеских зданий          
-                for (int i = 0; i < friend_build.size(); i++) {
-                    friend_build.get(i).render(gc);
+                for (int i = 0; i < buildings.size(); i++) {
+                    buildings.get(i).render(gc);
                     //Если исчерпали ресурсы то дальше                
-                    if (friend_build.get(i).Health <= 0) {
-                        friend_build.remove(friend_build.get(i));
-                        for (int k = 0; k < friend_unit.size(); k++) {
-                            if (friend_unit.get(k).type.equals("harvest")) {
-                                if (friend_unit.get(k).tanker < friend_unit.get(k).limit_tanker) {
-                                    friend_unit.get(k).get_res_target();
-
+                    if (buildings.get(i).Health <= 0) {
+                        buildings.remove(buildings.get(i));
+                        for (int k = 0; k < units.size(); k++) {
+                            if (units.get(k).type.equals(harvester)) {
+                                if (units.get(k).tanker < units.get(k).limit_tanker) {
+                                    units.get(k).get_res_target();
                                 }
                             }
                         }
                     }
                 }
-                
-                //Отрисовка врвжеских зданий          
-                for (int i = 0; i < enemy_build.size(); i++) {
-                    enemy_build.get(i).render(gc);  
-                    //Если исчерпали ресурсы то дальше                
-                    if (enemy_build.get(i).Health <= 0) {
-                        enemy_build.remove(enemy_build.get(i));
-                    }
-                }
-                
 
-                //Отрисовка дружеских юнитов          
-                for (int j = 0; j < friend_unit.size(); j++) {
-                    friend_unit.get(j).render(gc);
-                    for (int i = 0; i < friend_unit.get(j).bullet_arr.size(); i++) {
-                        friend_unit.get(j).bullet_arr.get(i).render(gc);
-                        if (friend_unit.get(j).bullet_arr.get(i).is_death) {
-                            friend_unit.get(j).bullet_arr.remove(friend_unit.get(j).bullet_arr.get(i));
+                //Отрисовка юнитов          
+                for (int j = 0; j < units.size(); j++) {
+                    units.get(j).render(gc);
+                    for (int i = 0; i < units.get(j).bullet_arr.size(); i++) {
+                        units.get(j).bullet_arr.get(i).render(gc);
+                        if (units.get(j).bullet_arr.get(i).is_death) {
+                            units.get(j).bullet_arr.remove(units.get(j).bullet_arr.get(i));
                         }
                     }
                     //Уничтожение
-                    if (friend_unit.get(j).Health <= 0) {
-                        friend_unit.remove(friend_unit.get(j));
-                    }
-                }
-
-                //Отрисовка вражеских юнитов
-                for (int i = 0; i < enemy_unit.size(); i++) {
-                    enemy_unit.get(i).render(gc);
-
-                    for (int j = 0; j < enemy_unit.get(i).bullet_arr.size(); j++) {
-                        enemy_unit.get(i).bullet_arr.get(j).render(gc);
-                        if (enemy_unit.get(i).bullet_arr.get(j).is_death) {
-                            enemy_unit.get(i).bullet_arr.remove(enemy_unit.get(i).bullet_arr.get(j));
-                        }
-                    }
-
-                    if (enemy_unit.get(i).Health <= 0) {
-                        enemy_unit.remove(enemy_unit.get(i));
+                    if (units.get(j).Health <= 0) {
+                        units.remove(units.get(j));
                     }
                 }
             }
@@ -378,9 +316,9 @@ public class MyGame extends Application {
             //Если режим конструктора
             if (is_construkt) {
                 if (cb1.selectedProperty().get()) {
-                    friend_build.get(0).setImage(new Image("img/refinary.png"));
+                    buildings.get(0).setImage(new Image("img/refinary.png"));
                     //Перенести в конструктор
-                    Unit un = new Unit("harvest");
+                    Unit un = new Unit(harvester);
                     un.setImage(new Image("img/Harvester.png"));
                     un.setCenterX(event.getX());
                     un.setCenterY(event.getY());
@@ -388,13 +326,16 @@ public class MyGame extends Application {
                     un.setBase_jps_y(event.getY());
                     un.get_res_target();
                     un.speed = 1;
-                    friend_unit.add(un);
+                    if (cb.selectedProperty().get()) {
+                        un.setStatus_stranger(2);
+                    } else {
+                        un.setStatus_stranger(1);
+                    }
+                    units.add(un);
                 } else if (cb2.selectedProperty().get()) {
-                    friend_build.get(0).setImage(new Image("img/base.png"));
-                } else if (cb.selectedProperty().get()) {
-                    enemy_build.get(0).setImage(new Image("img/base4.png"));
+                    buildings.get(0).setImage(new Image("img/base.png"));
                 } else {
-                    friend_build.get(0).setImage(new Image("img/base4.png"));
+                    buildings.get(0).setImage(new Image("img/base4.png"));
                 }
                 //Очищаем все селектные списки
                 select_build = null;
@@ -407,38 +348,45 @@ public class MyGame extends Application {
             }
 
             //Если режим селекта
-            if (is_select) {                
-                for (int i = 0; i < friend_unit.size(); i++) {
-                    if (select.intersects(friend_unit.get(i), construkt_X ,construkt_Y)) {
-                        selected_sprite.add(friend_unit.get(i));
+            if (is_select) {
+                for (int i = 0; i < units.size(); i++) {
+                    if (select.intersects(units.get(i), construkt_X, construkt_Y)) {
+                        //Если наш юнит
+                        //if (units.get(i).getStatus_stranger()==1){
+                        selected_sprite.add(units.get(i));
+                        //}
                     }
                 }
             }
 
             //Если выбран один юнит то
             if (!is_select) {
-                for (int i = 0; i < friend_unit.size(); i++) {
-                    if (friend_unit.get(i).getBoundary().contains(event.getX(), event.getY())) {
+                for (int i = 0; i < units.size(); i++) {
+                    if (units.get(i).getBoundary().contains(event.getX(), event.getY())) {
+                        //Если наш юнит
+                        //if (units.get(i).getStatus_stranger()==1){
                         selected_sprite.clear();
                         select_build = null;
-                        selected_sprite.add(friend_unit.get(i));
+                        selected_sprite.add(units.get(i));
                         return;
+                        //}
                     }
                 }
                 //Выбранное здание
-                for (int i = 0; i < friend_build.size(); i++) {
-                    if (friend_build.get(i).getBoundary().contains(event.getX(), event.getY())) {                        
-                        
+                for (int i = 0; i < buildings.size(); i++) {
+                    if (buildings.get(i).getBoundary().contains(event.getX(), event.getY())) {
+                        //Если наш юнит
+                        //if (buildings.get(i).getStatus_stranger()==1){                        
                         //Если очистка или ресурсы
-                        if (friend_build.get(i).type.equals("res")|friend_build.get(i).type.equals("refinary") ) {
-                            if (selected_sprite.get(0).type.equals("harvest")) {
+                        if (buildings.get(i).type.equals(resources) | buildings.get(i).type.equals(refinary)) {
+                            if (selected_sprite.get(0).type.equals(harvester)) {
                                 selected_sprite.get(0).setTarget_X(event.getX());
                                 selected_sprite.get(0).setTarget_Y(event.getY());
                                 return;
                             }
                         }
                         selected_sprite.clear();
-                        select_build = friend_build.get(i);
+                        select_build = buildings.get(i);
                         return;
                     }
                 }
@@ -478,7 +426,7 @@ public class MyGame extends Application {
                 }
                 select_build = null;
             }
-            
+
             is_select = false;
         });
 
@@ -491,19 +439,20 @@ public class MyGame extends Application {
                 Building build;
                 //Если очистку
                 if (cb1.selectedProperty().get()) {
-                    build = new Building("refinary");
+                    build = new Building(refinary);
                 } else if (cb2.selectedProperty().get()) {
-                    build = new Building("factory");
+                    build = new Building(medium_plant);
                 } else {
-                    build = new Building("base");
+                    build = new Building(base);
                 }
                 //Если построить вражеское здание
                 if (cb.selectedProperty().get()) {
-                    enemy_build.add(0, build);                    
+                    build.setStatus_stranger(2);
                 } else {
-                    friend_build.add(0, build);
+                    build.setStatus_stranger(1);
                     resourse = resourse - 25000;
                 }
+                buildings.add(0, build);
             } else {
                 System.out.println("NO resourse");
             }
@@ -511,26 +460,24 @@ public class MyGame extends Application {
 
         //Создать юнита
         create_unit.setOnAction(event -> {
-            //Создание вражеского юнита
-            if (cb.selectedProperty().get()) {
-                Unit unit = new Unit(unit_type);
-                unit.setCenterX(600);
-                unit.setCenterY(600);
-                enemy_unit.add(0, unit);
-                return;
-            }
             //Проверка бабок
             if (resourse - 1000 >= 0) {
-                if (select_build != null) {
-                    if (select_build.type.equals("factory")) {
-                        Unit unit = new Unit(unit_type, select_build.getPositionX() + 110, select_build.getPositionY() + 160);                        
-                        friend_unit.add(0, unit);
+                if (select_build != null){ 
+                    if (select_build.type.equals(medium_plant)) {
+                    Unit unit = new Unit(unit_type, select_build.getPositionX() + 110, select_build.getPositionY() + 160);
+                    //Если строим врага
+                    if (cb.selectedProperty().get()) {
+                        unit.setStatus_stranger(2);
+                    } else {
+                        unit.setStatus_stranger(1);
+                        resourse = resourse - 1000;
+                    }
+                    units.add(0, unit);
                     }
                 } else {
                     System.out.println("Не выбран завод");
                     return;
                 }
-                resourse = resourse - 1000;
             } else {
                 System.out.println("NO resourse");
             }
