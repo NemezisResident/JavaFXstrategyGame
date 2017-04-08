@@ -18,8 +18,8 @@ public class Building extends Rectangle {
     private Image image;
     private double positionX;
     private double positionY;
-    private double width;
-    private double height;
+    public double width;
+    public double height;
     public String type;
     public int Health;
     public boolean is_death;
@@ -27,12 +27,12 @@ public class Building extends Rectangle {
     //Конструктор
     public Building(String type) {
         if (type.equals("res")) {
-            this.setImage(new Image("img/res.png"));
-            this.Health = 3000;
+            this.setImage(new Image("img/sun.png"));
+            this.Health = 50000;
         } 
         else if(type.equals("base")) {
             this.setImage(new Image("img/base3.png"));
-            this.Health = 10000;
+            this.Health = 3000;
         }
         else if(type.equals("refinary")){
             this.setImage(new Image("img/refinary1.png"));
@@ -97,17 +97,39 @@ public class Building extends Rectangle {
         this.height = hight;
     }
 
-    // 
+    //--------------------------------------------------------------------------    
+    //Проверка коллизий 
     public Rectangle2D getBoundary() {
-        return new Rectangle2D(positionX, positionY, width, height);
+        return new Rectangle2D(positionX, positionY, Math.abs(width), Math.abs(height));
     }
 
-    //--------------------------------------------------------------------------    
-    //Проверка коллизий
+  
     public boolean intersects(Unit s) {
         return s.getBoundary().intersects(this.getBoundary());
     }
+    
+    //--------------------------------------------------------------------------    
+    //Проверка коллизий для селекта
+    public Rectangle2D getBoundary(Double x, Double y) {
+        Rectangle2D rec = new Rectangle2D(positionX, positionY, Math.abs(width), Math.abs(height));
 
+        //Поправки на неправильное выделение
+        if (width < 0 & height < 0) {
+            rec = new Rectangle2D(x, y, Math.abs(width), Math.abs(height));
+        } else if (width < 0 & height > 0) {
+            rec = new Rectangle2D(x, positionY, Math.abs(width), Math.abs(height));
+            System.out.println("bingo1");
+        } else if (width > 0 & height < 0) {
+            rec = new Rectangle2D(positionX, y, Math.abs(width), Math.abs(height));
+            System.out.println("bingo2");
+        }
+        return rec;
+    }
+  
+    public boolean intersects(Unit s, Double x, Double y) {
+        return s.getBoundary().intersects(this.getBoundary(x,y));
+    }
+    
     //Уничтожение
     public void death() {
         is_death = true;

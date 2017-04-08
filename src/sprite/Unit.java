@@ -32,7 +32,7 @@ public class Unit extends Circle {
     public int Health;
     public boolean is_death;    
     public ArrayList<Bullet> bullet_arr = new ArrayList<Bullet>();
-    private double radius_visible = 400.0;   
+    private double radius_visible = 500.0;   
     public double speed = 3;   
     public double tanker; // значение ресов в юните
     public double limit_tanker = 5000;  
@@ -98,8 +98,25 @@ public class Unit extends Circle {
         return s.getBoundary().intersects(this.getBoundary());
     }
 
+    //Проверяем юнитов в нашем радиусе
     public boolean intersects_enemy(Unit s) {
         return s.getAround(radius_visible).contains(this.getCenterX(), this.getCenterY());
+    }
+    
+    //Проверяем здания в нашем радиусе
+    public boolean intersects_enemy_b(Building s) {
+        boolean flag = false;
+        
+        if (this.getAround(radius_visible).contains(s.getPositionX(), s.getPositionY())) {
+            flag = true;
+        } else if (this.getAround(radius_visible).contains(s.getPositionX() + s.width, s.getPositionY() + s.height)) {
+            flag = true;
+        } else if (this.getAround(radius_visible).contains(s.getPositionX() + s.width, s.getPositionY())) {
+            flag = true;
+        } else if (this.getAround(radius_visible).contains(s.getPositionX(), s.getPositionY() + s.height)) {
+            flag = true;
+        }
+        return flag;
     }
 
     //Установка координат цели движения
@@ -140,6 +157,12 @@ public class Unit extends Circle {
 
     //Стрельба
     public void shot(Unit spM, Unit spE) {
+        Bullet b = new Bullet(spM, spE);
+        bullet_arr.add(b);
+    }
+    
+    //Стрельба по зданию
+    public void shot(Unit spM, Building spE) {
         Bullet b = new Bullet(spM, spE);
         bullet_arr.add(b);
     }
@@ -186,7 +209,7 @@ public class Unit extends Circle {
 
     //Сбор урожая
     public void harvest(Building b) {
-
+       
         //Если заполнился то на базу
         if (this.tanker >= this.limit_tanker) {
             this.target_X = this.base_jps_x;
@@ -197,11 +220,11 @@ public class Unit extends Circle {
         for (int i = 0; i < MyGame.friend_build.size(); i++) {
             if (MyGame.friend_build.get(i).equals(b)) {
                 MyGame.friend_build.get(i).Health = MyGame.friend_build.get(i).Health - 100;
-                
+                this.tanker = this.tanker + 100; 
+                return;
                 //System.out.println(MyGame.friend_build.get(i).Health);                
             }
-        }
-        this.tanker = this.tanker + 100;       
+        }   
     }
     
     //Выгруза урожая 
@@ -232,8 +255,8 @@ public class Unit extends Circle {
             }
         }
         if (item_v!=null){
-        this.target_X = item_v.getPositionX() + random + 60;
-        this.target_Y = item_v.getPositionY() + random + 60;       
+        this.target_X = item_v.getPositionX() + random + 30;
+        this.target_Y = item_v.getPositionY() + random + 30;       
         }
         else {
          this.target_X = this.base_jps_x;

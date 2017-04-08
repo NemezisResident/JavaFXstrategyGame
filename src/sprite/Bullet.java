@@ -23,6 +23,7 @@ public class Bullet extends ImageView {
 
     private Image image;
     private Unit enemy;
+    private Building enemyB;
     private double positionX;
     private double positionY;
     private double target_X;
@@ -32,7 +33,7 @@ public class Bullet extends ImageView {
     private double height;
     double radAngle;
 
-    //Конструктор
+    //Конструктор для юнита
     public Bullet(Unit me, Unit enemy) {
         this.image = new Image("img/laser1.png");
         ImageView iv = new ImageView(this.image);
@@ -73,6 +74,51 @@ public class Bullet extends ImageView {
         } else if (radAngle > 270 & radAngle < 350) {
             this.setPositionY(me.getCenterY() - (me.height / 2));
             this.target_Y = enemy.getCenterY() - (enemy.height / 2);
+        }
+    }
+    
+    //Конструктор для здания
+    public Bullet(Unit me, Building enemy) {
+        this.image = new Image("img/laser1.png");
+        ImageView iv = new ImageView(this.image);
+        Vector vectorA = new Vector(me.getCenterX(), me.getCenterY(), me.getCenterX() + 100.0, me.getCenterY());
+        Vector vectorB = new Vector(me.getCenterX(), me.getCenterY(), enemy.getPositionX() + (enemy.width/2),
+                enemy.getPositionY() + (enemy.height/2));
+
+        //Получаем угол поворота
+        radAngle = Vector.getAngle(vectorA, vectorB);
+
+        //Залепа
+        if (vectorB.getB() < 0) {
+            this.radAngle = 360 - radAngle;
+            iv.setRotate(radAngle);
+        } else {
+            iv.setRotate(radAngle);
+        }
+
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.TRANSPARENT);
+        Image rotatedImage = iv.snapshot(params, null);
+        this.setImage(rotatedImage);
+
+        this.width = this.image.getWidth();
+        this.height = this.image.getHeight();
+        this.setPosition(me.getCenterX(), me.getCenterY());
+        this.enemyB = enemy;
+
+        this.target_X = enemy.getPositionX() + (enemy.width/2);
+        this.target_Y = enemy.getPositionY() + (enemy.height/2);   
+        
+            //Костыль поправка на баг с углами
+        if (radAngle > 110 & radAngle < 170) {
+            this.setPositionX(me.getCenterX() - (me.height / 2));
+            //this.target_Y = enemy.getCenterY() - (enemy.height / 2);
+        } else if (radAngle > 190 & radAngle < 260) {
+            this.setPositionX(me.getCenterX() - (me.height / 2));
+            this.setPositionY(me.getCenterY() - (me.height / 2));
+        } else if (radAngle > 270 & radAngle < 350) {
+            this.setPositionY(me.getCenterY() - (me.height / 2));
+            //this.target_Y = enemy.getCenterY() - (enemy.height / 2);
         }
     }
 
@@ -139,24 +185,48 @@ public class Bullet extends ImageView {
         deltaY = target_Y - this.getPositionY();
         direction = Math.atan(deltaY / deltaX);
 
-        //Бьем врага
-        for (Unit unit : MyGame.enemy_unit) {
-            if (enemy.equals(unit)) {
+        //Если стрельба по юниту
+        if (this.enemy != null) {
+            //Бьем врага
+            for (Unit unit : MyGame.enemy_unit) {
+                if (this.enemy.equals(unit)) {
 
-                if (unit.getBoundary().intersects(this.getBoundary())) {
-                    unit.Health = unit.Health - 300;
-                    this.death();
+                    if (unit.getBoundary().intersects(this.getBoundary())) {
+                        unit.Health = unit.Health - 300;
+                        this.death();
+                    }
+                }
+            }
+
+            //Нас бьют
+            for (Unit unit : MyGame.friend_unit) {
+                if (this.enemy.equals(unit)) {
+
+                    if (unit.getBoundary().intersects(this.getBoundary())) {
+                        unit.Health = unit.Health - 300;
+                        this.death();
+                    }
                 }
             }
         }
-        
-        //Нас бьют
-        for (Unit unit : MyGame.friend_unit) {
-            if (enemy.equals(unit)) {
-
-                if (unit.getBoundary().intersects(this.getBoundary())) {
-                    unit.Health = unit.Health - 300;
-                    this.death();
+        //Если стрельба по зданию
+        else if (this.enemyB != null) {
+            //Бьем врага
+            for (Building bb : MyGame.enemy_build) {
+                if (this.enemyB.equals(bb)) {
+                    if (bb.getBoundary().intersects(this.getBoundary())) {
+                        bb.Health = bb.Health - 100;
+                        this.death();
+                    }
+                }
+            }
+            //Бьют нас
+            for (Building bb : MyGame.friend_build) {
+                if (this.enemyB.equals(bb)) {
+                    if (bb.getBoundary().intersects(this.getBoundary())) {
+                        bb.Health = bb.Health - 100;
+                        this.death();
+                    }
                 }
             }
         }
