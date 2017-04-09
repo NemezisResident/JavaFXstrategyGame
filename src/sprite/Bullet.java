@@ -13,6 +13,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import mygame.MyGame;
 import geometry.Vector;
+import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 
 /*
@@ -32,6 +33,7 @@ public class Bullet extends ImageView {
     private double width;
     private double height;
     double radAngle;
+    private Bullet I_am;
 
     //Конструктор для юнита
     public Bullet(Unit me, Unit enemy) {
@@ -51,10 +53,19 @@ public class Bullet extends ImageView {
             iv.setRotate(radAngle);
         }
 
-        SnapshotParameters params = new SnapshotParameters();
-        params.setFill(Color.TRANSPARENT);
-        Image rotatedImage = iv.snapshot(params, null);
-        this.setImage(rotatedImage);
+        I_am = this;
+        
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                // Update UI here.
+                SnapshotParameters params = new SnapshotParameters();
+                params.setFill(Color.TRANSPARENT);
+                Image rotatedImage = iv.snapshot(params, null);
+                I_am.setImage(rotatedImage);
+            }
+        });
+          
 
         this.width = this.image.getWidth();
         this.height = this.image.getHeight();
@@ -77,7 +88,7 @@ public class Bullet extends ImageView {
         }
     }
 
-    //Конструктор для здания
+    //Конструктор для лазера
     public Bullet(Unit me, Building enemy) {
         this.image = new Image("img/laser1.png");
         ImageView iv = new ImageView(this.image);
@@ -96,10 +107,18 @@ public class Bullet extends ImageView {
             iv.setRotate(radAngle);
         }
 
-        SnapshotParameters params = new SnapshotParameters();
-        params.setFill(Color.TRANSPARENT);
-        Image rotatedImage = iv.snapshot(params, null);
-        this.setImage(rotatedImage);
+       I_am = this;
+        
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                // Update UI here.
+                SnapshotParameters params = new SnapshotParameters();
+                params.setFill(Color.TRANSPARENT);
+                Image rotatedImage = iv.snapshot(params, null);
+                I_am.setImage(rotatedImage);
+            }
+        });
 
         this.width = this.image.getWidth();
         this.height = this.image.getHeight();
@@ -188,10 +207,10 @@ public class Bullet extends ImageView {
         //Если стрельба по юниту
         if (this.enemy != null) {
             //Наносим урон юниту
-            for (Unit unit : MyGame.units) {
-                if (this.enemy.equals(unit)) {
-                    if (unit.getBoundary().intersects(this.getBoundary())) {
-                        unit.Health = unit.Health - 300;
+            for (int i =0; i < MyGame.units.size() ; i ++) {
+                if (this.enemy.equals(MyGame.units.get(i))) {
+                    if (MyGame.units.get(i).getBoundary().intersects(this.getBoundary())) {
+                        MyGame.units.get(i).Health = MyGame.units.get(i).Health - 300;
                         this.death();
                     }
                 }
@@ -199,10 +218,10 @@ public class Bullet extends ImageView {
         } //Если стрельба по зданию
         else if (this.enemyB != null) {
             //Наносим урон зданию
-            for (Building bb : MyGame.buildings) {
-                if (this.enemyB.equals(bb)) {
-                    if (bb.getBoundary().intersects(this.getBoundary())) {
-                        bb.Health = bb.Health - 100;
+            for  (int i =0; i < MyGame.buildings.size() ; i ++) {
+                if (this.enemyB.equals(MyGame.buildings.get(i))) {
+                    if (MyGame.buildings.get(i).getBoundary().intersects(this.getBoundary())) {
+                        MyGame.buildings.get(i).Health = MyGame.buildings.get(i).Health - 100;
                         this.death();
                     }
                 }
@@ -230,5 +249,9 @@ public class Bullet extends ImageView {
     //Уничтожить пулю
     public void death() {
         is_death = true;
+    }
+
+    public void setImage1(Image image) {
+        this.setImage(image);
     }
 }

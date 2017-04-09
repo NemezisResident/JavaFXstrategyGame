@@ -46,7 +46,7 @@ public class MyGame extends Application {
     private double construkt_Y;
     private boolean is_construkt;
     private boolean is_select;
-    public static double resourse = 100000;
+    public static double resourse = 1000000;
     private long time_pres;
     private long time_drag;
 
@@ -67,11 +67,6 @@ public class MyGame extends Application {
     private final String medium_plant = "MEDIUM_PLANT";
     private final String base = "BASE";
 
-    //--------------------------------------------------------------------------
-    public static void main(String[] args) {
-        launch(args);
-    }
-
     @Override
     public void start(Stage theStage) {
         theStage.setTitle("Game robotics");
@@ -88,11 +83,13 @@ public class MyGame extends Application {
         cb1.setAllowIndeterminate(false);
         CheckBox cb2 = new CheckBox("Mech");
         cb2.setAllowIndeterminate(false);
+        CheckBox cb3 = new CheckBox("10");
+        cb3.setAllowIndeterminate(false);
 
         Button create_unit = new Button("СОЗДАТЬ");
         Button create_factory = new Button("Построить");
         resourse_lbl = new Label(String.valueOf(resourse));
-        hbox.getChildren().addAll(create_factory, create_unit, resourse_lbl, cb, cb1, cb2);
+        hbox.getChildren().addAll(create_factory, create_unit, resourse_lbl, cb, cb1, cb2,cb3);
 
         //
         Scene theScene = new Scene(vbox);
@@ -130,7 +127,7 @@ public class MyGame extends Application {
         gameLoop.setCycleCount(Timeline.INDEFINITE);
         final long timeStart = System.currentTimeMillis();
         KeyFrame kf = new KeyFrame(
-                Duration.seconds(0.017), // 60 FPS    
+                Duration.seconds(0.01), // 0.017 - 60 FPS    
                 new EventHandler<ActionEvent>() {
             public void handle(ActionEvent ae) {
                 //------------------------------------------------------------------
@@ -165,6 +162,7 @@ public class MyGame extends Application {
                     select.render(gc, width, hight);
                 }
 
+                /*
                 //Движение юнитов и пуль                
                 for (int i = 0; i < units.size(); i++) {
                     units.get(i).runner();
@@ -178,6 +176,7 @@ public class MyGame extends Application {
                         }
                     }
                 }
+
 
                 //Проверка коллизий для пересечения юнитов
                 for (int i = 0; i < units.size(); i++) {
@@ -214,6 +213,7 @@ public class MyGame extends Application {
                     }
                 }
 
+
                 //Проверка радиуса обзора для стрельбы
                 for (int i = 0; i < units.size(); i++) {
                     //Проверяем юнитов в радиусе
@@ -249,6 +249,7 @@ public class MyGame extends Application {
                         }
                     }
                 }
+*/
 
                 //--------------------------------------------------------------
                 //Отрисовка дружеских зданий          
@@ -460,26 +461,32 @@ public class MyGame extends Application {
 
         //Создать юнита
         create_unit.setOnAction(event -> {
-            //Проверка бабок
-            if (resourse - 1000 >= 0) {
-                if (select_build != null){ 
-                    if (select_build.type.equals(medium_plant)) {
-                    Unit unit = new Unit(unit_type, select_build.getPositionX() + 110, select_build.getPositionY() + 160);
-                    //Если строим врага
-                    if (cb.selectedProperty().get()) {
-                        unit.setStatus_stranger(2);
+            for (int i = 0; i < 10; i++) {
+                //Проверка бабок
+                if (resourse - 1000 >= 0) {
+                    if (select_build != null) {
+                        if (select_build.type.equals(medium_plant)) {
+                            Unit unit = new Unit(unit_type, select_build.getPositionX() + 110, select_build.getPositionY() + 160);
+                            //Если строим врага
+                            if (cb.selectedProperty().get()) {
+                                unit.setStatus_stranger(2);
+                            } else {
+                                unit.setStatus_stranger(1);
+                                resourse = resourse - 1000;
+                            }
+                            units.add(0, unit);
+                        }
                     } else {
-                        unit.setStatus_stranger(1);
-                        resourse = resourse - 1000;
-                    }
-                    units.add(0, unit);
+                        System.out.println("Не выбран завод");
+                        return;
                     }
                 } else {
-                    System.out.println("Не выбран завод");
+                    System.out.println("NO resourse");
+                }
+
+                if (!cb3.selectedProperty().get()) {
                     return;
                 }
-            } else {
-                System.out.println("NO resourse");
             }
         });
 
@@ -500,6 +507,17 @@ public class MyGame extends Application {
 
     public static void setResourse(double resourse) {
         MyGame.resourse = resourse;
+    }
+    
+     //--------------------------------------------------------------------------
+    public static void main(String[] args) {
+        Test_Thread myThread = new Test_Thread();
+        myThread.start();
+        
+        Test_Thread2 myThread2 = new Test_Thread2();
+        myThread2.start();
+        
+        launch(args);
     }
 }
 
