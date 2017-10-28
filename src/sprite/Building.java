@@ -35,7 +35,7 @@ public class Building extends Rectangle {
     public Building(String type) {
         if (type.equals(resources)) {
             this.setImage(new Image("img/sun.png"));
-            this.Health = 50000;
+            this.Health = 100000;
         } else if (type.equals(base)) {
             this.setImage(new Image("img/base3.png"));
             this.Health = 3000;

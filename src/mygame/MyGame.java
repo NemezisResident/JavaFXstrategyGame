@@ -6,7 +6,6 @@
 package mygame;
 
 import sprite.Unit;
-import sprite.Bullet;
 import java.util.ArrayList;
 import java.util.Date;
 import javafx.animation.KeyFrame;
@@ -27,6 +26,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 import sprite.Building;
 
@@ -46,7 +46,7 @@ public class MyGame extends Application {
     private double construkt_Y;
     private boolean is_construkt;
     private boolean is_select;
-    public static double resourse = 1000000;
+    public static double resourse = 50000;
     private long time_pres;
     private long time_drag;
 
@@ -89,7 +89,7 @@ public class MyGame extends Application {
         Button create_unit = new Button("СОЗДАТЬ");
         Button create_factory = new Button("Построить");
         resourse_lbl = new Label(String.valueOf(resourse));
-        hbox.getChildren().addAll(create_factory, create_unit, resourse_lbl, cb, cb1, cb2,cb3);
+        hbox.getChildren().addAll(create_factory, create_unit, resourse_lbl, cb, cb1, cb2, cb3);
 
         //
         Scene theScene = new Scene(vbox);
@@ -249,8 +249,7 @@ public class MyGame extends Application {
                         }
                     }
                 }
-*/
-
+                 */
                 //--------------------------------------------------------------
                 //Отрисовка дружеских зданий          
                 for (int i = 0; i < buildings.size(); i++) {
@@ -489,6 +488,14 @@ public class MyGame extends Application {
                 }
             }
         });
+        
+         //Событие при закрытии окна
+        theStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                System.exit(0);
+            }
+        });
 
         //----------------------------------------------------------------------
         gameLoop.getKeyFrames().add(kf);
@@ -508,15 +515,15 @@ public class MyGame extends Application {
     public static void setResourse(double resourse) {
         MyGame.resourse = resourse;
     }
-    
-     //--------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------
     public static void main(String[] args) {
         Test_Thread myThread = new Test_Thread();
         myThread.start();
-        
+
         Test_Thread2 myThread2 = new Test_Thread2();
         myThread2.start();
-        
+
         launch(args);
     }
 }
